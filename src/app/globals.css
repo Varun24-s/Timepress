@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --parchment: #f4f1ea;
+  --ink: #1a1a1a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: white; /* Dark background to contrast the paper */
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+.newspaper-paper {
+  background-color: #f4f1ea;
+  /* Use a fixed width and height that matches A4 ratio (1 : 1.414) */
+  width: 800px;
+  height: 1132px; 
+  
+  padding: 3rem;
+  margin: 0 auto 2rem auto;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden; /* Prevents text from pushing the page longer */
+  
+  /* Standard colors to avoid oklab errors */
+  color: #1a1a1a;
+}
+
+.border-double-black {
+  border-style: double;
+  border-color: black;
+  border-width: 4px 0;
+}
+
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #2c2c2c;
+}
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 10px;
+}
+
+.newspaper-sheet {
+  /* This ensures the PDF generator starts a new page after each sheet */
+  break-after: page;
+  page-break-after: always;
+  /* Lock the dimensions to A4 ratio */
+  width: 800px;
+  height: 1132px;
+}
+
+/* Optional: Hide the stardust pattern during export for cleaner text */
+@media print {
+  /* Ensure the hidden tabs show up in the PDF */
+  .hidden {
+    display: block !important;
+  }
+
+  .newspaper-paper {
+    width: 210mm !important;
+    height: 150mm !important;
+    margin: 0 !important;
+    padding: 20mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    /* This creates the new page in the PDF */
+    page-break-after: always !important;
+    break-after: page !important;
+    background-color: #f4f1ea !important;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+
+.newspaper-paper p, 
+.newspaper-paper h1, 
+.newspaper-paper h2, 
+.newspaper-paper h3, 
+.newspaper-paper span,
+.newspaper-paper div {
+  font-family: 'Crimson Text', 'Times New Roman', serif;
 }
