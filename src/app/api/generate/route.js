@@ -4,82 +4,83 @@ const WIKI_HEADERS = {
     'User-Agent': 'TimePressArchive/1.0 (contact: your-email@example.com)'
 };
 
+const cache = new Map();
+
 async function fetchWikiPage(title) {
-    console.log(`[WIKI] Attempting fetch: ${title}`);
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    if (cache.has(title)) return cache.get(title);
     try {
-        const res = await fetch(url, { headers: WIKI_HEADERS });
-        if (!res.ok) {
-            console.warn(`[WIKI] No page found for: ${title} (Status: ${res.status})`);
-            return "";
-        }
+        const res = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+            { headers: WIKI_HEADERS, signal: AbortSignal.timeout(3000) }
+        );
+        if (!res.ok) return "";
         const data = await res.json();
-        console.log(`[WIKI] Successfully fetched context for: ${title}`);
-        return data.extract || "";
-    } catch (e) {
-        console.error(`[WIKI] Error fetching ${title}:`, e.message);
-        return "";
-    }
+        const extract = (data.extract || "").slice(0, 400);
+        cache.set(title, extract);
+        return extract;
+    } catch { return ""; }
+}
+
+async function fetchOnThisDay(month, day, year) {
+    const key = `otd-${month}-${day}-${year}`;
+    if (cache.has(key)) return cache.get(key);
+    try {
+        const res = await fetch(
+            `https://en.wikipedia.org/api/rest_v1/feed/onthisday/all/${month}/${day}`,
+            { headers: WIKI_HEADERS, signal: AbortSignal.timeout(3000) }
+        );
+        const data = res.ok ? await res.json() : { events: [] };
+        cache.set(key, data);
+        return data;
+    } catch { return { events: [] }; }
 }
 
 export async function POST(req) {
-    console.log("--- 🚀 NEW DISPATCH REQUEST RECEIVED ---");
-    try {
-        const body = await req.json();
-        const { date: dateString, region } = body;
-        console.log(`[INPUT] Date: ${dateString} | Region: ${region}`);
+    const body = await req.json();
+    const { date: dateString, region } = body;
 
-        const date = new Date(dateString);
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        const year = date.getFullYear();
-        const monthName = date.toLocaleString('en-US', { month: 'long' });
+    const date = new Date(dateString);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const monthName = date.toLocaleString('en-US', { month: 'long' });
 
-        // 1. SAFELY FETCH DATA
-        console.log("[WIKI] Gathering historical intelligence...");
-        const [onThisDayData, monthContext, yearContext] = await Promise.all([
-            fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/all/${month}/${day}`, { headers: WIKI_HEADERS })
-                .then(res => {
-                    console.log(`[WIKI] OnThisDay status: ${res.status}`);
-                    return res.ok ? res.json() : { events: [] };
-                })
-                .catch((err) => {
-                    console.error("[WIKI] OnThisDay Fetch Error:", err);
-                    return { events: [] };
-                }),
+    // Wikipedia with 4s race
+    const [monthContext, , onThisDayData] = await Promise.race([
+        Promise.all([
             fetchWikiPage(`${monthName}_${year}`),
-            fetchWikiPage(`${year}`)
-        ]);
+            fetchWikiPage(`${year}`),
+            fetchOnThisDay(month, day, year)
+        ]),
+        new Promise(r => setTimeout(() => r(["", "", { events: [] }]), 4000))
+    ]);
 
-        const specificEvents = (onThisDayData.events || [])
-            .filter(e => e.year <= year)
-            .slice(0, 5)
-            .map(e => `[Year ${e.year}]: ${e.text}`)
-            .join("\n") || "General era updates.";
+    const specificEvents = (onThisDayData.events || [])
+        .filter(e => e.year <= year)
+        .slice(0, 5)
+        .map(e => `[${e.year}]: ${e.text}`)
+        .join("\n") || "General era updates.";
 
-        console.log("[WIKI] Data gathering complete.");
-
-        // 2. OPENROUTER CALL
-        console.log(`[AI] Contacting OpenRouter via Nemotron... (Key: ${process.env.OPENROUTER_API_KEY ? "Present" : "MISSING"})`);
-        const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:3000",
-                "X-OpenRouter-Title": "TimePress",
-            },
-            body: JSON.stringify({
-                model: "nvidia/nemotron-3-nano-30b-a3b:free",
-                messages: [
-                    {
-                        role: "system",
-                        content: `You are the Lead Editor of 'The TimePress' in ${year}. 
-      Style: Victorian, formal, dramatic. You MUST output ONLY valid JSON.`
-                    },
-                    {
-  role: "user",
-  content: `You are a senior editor at a major newspaper serving ${region}. 
+    // ✅ Request streaming from OpenRouter
+    const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost:3000",
+            "X-OpenRouter-Title": "TimePress",
+        },
+        body: JSON.stringify({
+            model: "nvidia/nemotron-3-nano-30b-a3b:free",
+            stream: true, // ✅ KEY CHANGE
+            messages: [
+                {
+                    role: "system",
+                    content: `You are the Lead Editor of 'The TimePress' in ${year}. Output ONLY valid JSON.`
+                },
+                {
+                    role: "user",
+                    content: `You are a senior editor at a major newspaper serving ${region}. 
 Today's edition: ${dateString}.
 
 ## BACKGROUND BRIEFING
@@ -90,7 +91,6 @@ ${monthContext}
 - Clear, factual, modern journalistic prose (AP/Reuters style)
 - Inverted pyramid structure: most important facts first
 - Include named sources, quotes, and specific figures/statistics where possible
-- No dramatic Victorian language — write like a professional journalist in ${dateString}
 
 ---
 
@@ -101,119 +101,115 @@ ${monthContext}
 - Dateline format: "CITY, Month Date (Region Chronicle) —"
 - Must include: WHO, WHAT, WHEN, WHERE, WHY, HOW
 - Include at least 2 named sources or official quotes
-- End with: public reaction OR what happens next (follow-up angle)
+- End with: public reaction OR what happens next
 
 ### SIDE STORIES (4 articles, 150+ words each)
-Exactly 4 stories covering different beats:
-1. INTERNATIONAL — A major world event with direct or indirect impact on ${region}
+1. INTERNATIONAL — A major world event with impact on ${region}
 2. POLITICS & GOVERNMENT — A policy, election, or legislative development
 3. BUSINESS & ECONOMY — Markets, trade, industry, or economic data
 4. LOCAL & REGIONAL — A community, crime, infrastructure, or human interest story
-
-Each headline must be specific — name real people, places, or events. No vague headlines.
+Each headline must name real people, places, or events.
 
 ### SPORTS (3 match reports, 120+ words each)
-Write as proper sports journalism, not bullet points.
-Pick the 3 most relevant sports being played in ${region} on this date.
-Each report must include:
+Pick 3 relevant sports for ${region}. Each must include:
 - Teams/athletes, venue, score or outcome
 - A key moment or turning point
 - A quote from a player, coach, or official
-- Standings or context (league table, tournament stage)
 
 ### CLASSIFIEDS (8 advertisements)
-One ad per category, in this order:
-1. JOBS — A real-sounding employer hiring for a specific role
-2. REAL ESTATE — A property listing with address, specs, and price
-3. AUTOMOTIVE — A vehicle for sale or dealership promotion
-4. PERSONAL — A personal announcement (birthday, thanks, in memoriam)
-5. TRAVEL — An airline, rail, or travel agency promotion with a destination
-6. RETAIL — A store sale or product launch
-7. SERVICES — A local professional (lawyer, doctor, plumber, tutor)
-8. TENDERS & NOTICES — A government or corporate procurement notice
-
-Each ad must include: a bold heading, a business/person name, 
-contact info or address relevant to ${region}, and a price or call-to-action.
+1. JOBS 2. REAL ESTATE 3. AUTOMOTIVE 4. PERSONAL
+5. TRAVEL 6. RETAIL 7. SERVICES 8. TENDERS
 
 ---
 
-## STRICT JSON OUTPUT FORMAT
-Return ONLY valid JSON. No markdown fences, no extra text, no commentary outside the JSON.
-
+Return ONLY valid JSON:
 {
-  "mainStory": {
-    "headline": "SPECIFIC, FACTUAL HEADLINE IN TITLE CASE",
-    "dateline": "CITY, Month Date (Source) —",
-    "content": "400+ word news report in AP style..."
-  },
+  "mainStory": { "headline": "...", "dateline": "...", "content": "..." },
   "sideStories": [
-    { "headline": "International: Specific Headline", "dateline": "CITY, Date (Agency) —", "content": "150+ words..." },
-    { "headline": "Politics: Specific Headline", "dateline": "CITY, Date —", "content": "150+ words..." },
-    { "headline": "Business: Specific Headline", "dateline": "CITY, Date —", "content": "150+ words..." },
-    { "headline": "Local: Specific Headline", "dateline": "CITY, Date —", "content": "150+ words..." }
+    { "headline": "...", "dateline": "...", "content": "..." },
+    { "headline": "...", "dateline": "...", "content": "..." },
+    { "headline": "...", "dateline": "...", "content": "..." },
+    { "headline": "...", "dateline": "...", "content": "..." }
   ],
   "sportsStories": [
-    { "headline": "SPORT NAME: Team A vs Team B — Venue", "content": "120+ words match report..." },
-    { "headline": "SPORT NAME: Event or Race Name", "content": "120+ words report..." },
-    { "headline": "SPORT NAME: Match or Tournament", "content": "120+ words report..." }
+    { "headline": "...", "content": "..." },
+    { "headline": "...", "content": "..." },
+    { "headline": "...", "content": "..." }
   ],
-  "classifieds": [
-    "JOBS | [Employer Name] | [Role] | [Location] | [Contact]",
-    "REAL ESTATE | [Address] | [Specs] | [Price] | [Agent Contact]",
-    "AUTOMOTIVE | [Make/Model/Year] | [Condition] | [Price] | [Seller Contact]",
-    "PERSONAL | [Name] | [Announcement] | [Date]",
-    "TRAVEL | [Operator] | [Route/Destination] | [Price] | [Booking Info]",
-    "RETAIL | [Store Name] | [Offer] | [Location] | [Dates]",
-    "SERVICES | [Provider] | [Service] | [Area Covered] | [Contact]",
-    "TENDERS | [Issuing Body] | [Notice Type] | [Deadline] | [Reference No.]"
-  ]
-}`,
-}
-                ],
-                response_format: { type: "json_object" }
-            }),
-        });
+  "classifieds": ["...","...","...","...","...","...","...","..."]
+}`
+                }
+            ],
+            response_format: { type: "json_object" }
+        }),
+    });
 
-        if (!aiResponse.ok) {
-            const errorText = await aiResponse.text();
-            console.error("[AI] OpenRouter Error Details:", errorText);
-            return NextResponse.json({ error: "AI Dispatch Failed" }, { status: aiResponse.status });
-        }
-
-        const aiData = await aiResponse.json();
-        console.log("[AI] Response received from OpenRouter.");
-
-        // 1. ADD THIS SAFETY CHECK
-        const message = aiData.choices?.[0]?.message;
-        let rawContent = message?.content;
-
-        if (!rawContent) {
-            console.error("❌ [AI] The Editor sent a blank telegram! (Empty content)");
-            // Look at the full aiData to see if OpenRouter sent a refusal or error
-            console.log("Full AI Response Object:", JSON.stringify(aiData));
-            return NextResponse.json({ error: "Empty response from AI" }, { status: 500 });
-        }
-
-        console.log("[AI] Raw content length:", rawContent.length);
-
-        // 2. CONTINUE WITH PARSING
-        rawContent = rawContent.replace(/```json|```/g, "").trim();
-
-        try {
-            const newspaperJSON = JSON.parse(rawContent);
-            console.log("[PARSE] Success! Valid JSON reconstructed.");
-            return NextResponse.json({
-                ...newspaperJSON,
-                date: date.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-                region: region || "London"
-            });
-        } catch (parseError) {
-            console.error("[PARSE] FAILED. Problematic content snippet:", rawContent.substring(0, 200));
-            return NextResponse.json({ error: "The Editor's handwriting is illegible (JSON Error)." }, { status: 500 });
-        }
-
-    } catch (error) {
-        console.error("🚨 SERVER CRASH:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    if (!aiResponse.ok) {
+        const err = await aiResponse.text();
+        return NextResponse.json({ error: "AI Dispatch Failed", detail: err }, { status: 500 });
     }
+
+    // ✅ Pipe the SSE stream from OpenRouter → client
+    // Collect chunks, parse JSON only when stream ends
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+        async start(controller) {
+            const reader = aiResponse.body.getReader();
+            let fullText = "";
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
+
+                    for (const line of lines) {
+                        const jsonStr = line.replace("data: ", "").trim();
+                        if (jsonStr === "[DONE]") continue;
+                        try {
+                            const parsed = JSON.parse(jsonStr);
+                            const token = parsed.choices?.[0]?.delta?.content || "";
+                            fullText += token;
+
+                            // ✅ Send each token to client immediately as plain text
+                            controller.enqueue(encoder.encode(token));
+                        } catch { /* malformed SSE line, skip */ }
+                    }
+                }
+
+                // ✅ After stream ends, validate the complete JSON and send a final envelope
+                const clean = fullText.replace(/```json|```/g, "").trim();
+                const newspaperJSON = JSON.parse(clean);
+
+                const finalPayload = JSON.stringify({
+                    __final: true,
+                    ...newspaperJSON,
+                    date: date.toLocaleDateString('en-GB', {
+                        weekday: 'long', year: 'numeric',
+                        month: 'long', day: 'numeric'
+                    }),
+                    region: region || "London"
+                });
+
+                // ✅ Send the validated final object as a clearly marked envelope
+                controller.enqueue(encoder.encode(`\n__END__${finalPayload}`));
+            } catch (e) {
+                controller.enqueue(encoder.encode(`\n__ERROR__${e.message}`));
+            } finally {
+                controller.close();
+            }
+        }
+    });
+
+    return new Response(stream, {
+        headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-cache",
+        },
+    });
 }
