@@ -78,36 +78,97 @@ export async function POST(req) {
       Style: Victorian, formal, dramatic. You MUST output ONLY valid JSON.`
                     },
                     {
-                        role: "user",
-                        content: `Generate a full, unique newspaper edition for ${region} on ${dateString}. 
-  Historical Context: ${specificEvents}. ${monthContext}.
+  role: "user",
+  content: `You are a senior editor at a major newspaper serving ${region}. 
+Today's edition: ${dateString}.
 
-  ### GENERATION RULES ###
-  1. TITLES: Every 'headline' (including Sports) must be a unique, dramatic Victorian title. NO placeholders.
-  2. CLASSIFIEDS: Generate 6 distinct, localized ads (Employment, Luxury, Personal, Shipping, Industrial, Domestic).
-  3. DENSITY: Main story 300+ words. Foreign and Sports stories 100+ words each.
-  4. SPORTS AS NEWS: Treat Sports matches as individual news reports with their own headlines.
+## BACKGROUND BRIEFING
+${specificEvents}
+${monthContext}
 
-  ### MANDATORY JSON STRUCTURE ###
-  {
-    "mainStory": {
-      "headline": "UNIQUE ALL-CAPS LEAD HEADLINE",
-      "content": "300+ word immersive report."
-    },
-    "sideStories": [
-      { "headline": "International Despatch 1", "content": "..." },
-      { "headline": "International Despatch 2", "content": "..." },
-      { "headline": "International Despatch 3", "content": "..." },
-      { "headline": "Regional Intelligence", "content": "..." }
-    ],
-    "sportsStories": [
-      { "headline": "CRICKET: THE ASHES SERIES", "content": "Detailed match report..." },
-      { "headline": "TURF: THE DERBY STAKES", "content": "Detailed racing report..." },
-      { "headline": "FOOTBALL: CUP FINALS", "content": "Detailed match report..." }
-    ],
-    "classifieds": ["Ad 1", "Ad 2", "Ad 3", "Ad 4", "Ad 5", "Ad 6", "Ad 7", "Ad 8"]
-  }`
-                    }
+## WRITING STYLE
+- Clear, factual, modern journalistic prose (AP/Reuters style)
+- Inverted pyramid structure: most important facts first
+- Include named sources, quotes, and specific figures/statistics where possible
+- No dramatic Victorian language — write like a professional journalist in ${dateString}
+
+---
+
+## CONTENT REQUIREMENTS
+
+### MAIN STORY (400+ words)
+- The single biggest news event affecting ${region} on this date
+- Dateline format: "CITY, Month Date (Region Chronicle) —"
+- Must include: WHO, WHAT, WHEN, WHERE, WHY, HOW
+- Include at least 2 named sources or official quotes
+- End with: public reaction OR what happens next (follow-up angle)
+
+### SIDE STORIES (4 articles, 150+ words each)
+Exactly 4 stories covering different beats:
+1. INTERNATIONAL — A major world event with direct or indirect impact on ${region}
+2. POLITICS & GOVERNMENT — A policy, election, or legislative development
+3. BUSINESS & ECONOMY — Markets, trade, industry, or economic data
+4. LOCAL & REGIONAL — A community, crime, infrastructure, or human interest story
+
+Each headline must be specific — name real people, places, or events. No vague headlines.
+
+### SPORTS (3 match reports, 120+ words each)
+Write as proper sports journalism, not bullet points.
+Pick the 3 most relevant sports being played in ${region} on this date.
+Each report must include:
+- Teams/athletes, venue, score or outcome
+- A key moment or turning point
+- A quote from a player, coach, or official
+- Standings or context (league table, tournament stage)
+
+### CLASSIFIEDS (8 advertisements)
+One ad per category, in this order:
+1. JOBS — A real-sounding employer hiring for a specific role
+2. REAL ESTATE — A property listing with address, specs, and price
+3. AUTOMOTIVE — A vehicle for sale or dealership promotion
+4. PERSONAL — A personal announcement (birthday, thanks, in memoriam)
+5. TRAVEL — An airline, rail, or travel agency promotion with a destination
+6. RETAIL — A store sale or product launch
+7. SERVICES — A local professional (lawyer, doctor, plumber, tutor)
+8. TENDERS & NOTICES — A government or corporate procurement notice
+
+Each ad must include: a bold heading, a business/person name, 
+contact info or address relevant to ${region}, and a price or call-to-action.
+
+---
+
+## STRICT JSON OUTPUT FORMAT
+Return ONLY valid JSON. No markdown fences, no extra text, no commentary outside the JSON.
+
+{
+  "mainStory": {
+    "headline": "SPECIFIC, FACTUAL HEADLINE IN TITLE CASE",
+    "dateline": "CITY, Month Date (Source) —",
+    "content": "400+ word news report in AP style..."
+  },
+  "sideStories": [
+    { "headline": "International: Specific Headline", "dateline": "CITY, Date (Agency) —", "content": "150+ words..." },
+    { "headline": "Politics: Specific Headline", "dateline": "CITY, Date —", "content": "150+ words..." },
+    { "headline": "Business: Specific Headline", "dateline": "CITY, Date —", "content": "150+ words..." },
+    { "headline": "Local: Specific Headline", "dateline": "CITY, Date —", "content": "150+ words..." }
+  ],
+  "sportsStories": [
+    { "headline": "SPORT NAME: Team A vs Team B — Venue", "content": "120+ words match report..." },
+    { "headline": "SPORT NAME: Event or Race Name", "content": "120+ words report..." },
+    { "headline": "SPORT NAME: Match or Tournament", "content": "120+ words report..." }
+  ],
+  "classifieds": [
+    "JOBS | [Employer Name] | [Role] | [Location] | [Contact]",
+    "REAL ESTATE | [Address] | [Specs] | [Price] | [Agent Contact]",
+    "AUTOMOTIVE | [Make/Model/Year] | [Condition] | [Price] | [Seller Contact]",
+    "PERSONAL | [Name] | [Announcement] | [Date]",
+    "TRAVEL | [Operator] | [Route/Destination] | [Price] | [Booking Info]",
+    "RETAIL | [Store Name] | [Offer] | [Location] | [Dates]",
+    "SERVICES | [Provider] | [Service] | [Area Covered] | [Contact]",
+    "TENDERS | [Issuing Body] | [Notice Type] | [Deadline] | [Reference No.]"
+  ]
+}`,
+}
                 ],
                 response_format: { type: "json_object" }
             }),
