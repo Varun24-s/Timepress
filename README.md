@@ -37,21 +37,9 @@ The core of the application is a data pipeline that maps unstructured historical
 
 ## Directory Structure
 
-
-├── app/
-│   ├── api/
-│   │   └── generate/
-│   │       └── route.js        # POST Endpoint: Orchestrates LLM synthesis & data fetching
-│   ├── edition/
-│   │   └── [id]/
-│   │       └── page.js         # Dynamic Route: Handles folio state & NewspaperPreview mounting
-│   ├── global.css              # Typography system & CSS Grid utility definitions
-│   ├── layout.js               # Root Provider: Manages font injection & metadata
-│   └── page.js                 # Entry Portal: Search parameter capture & navigation logic
-├── components/
-│   ├── NewspaperPreview.jsx    # Core UI Engine: Maps JSON fragments to 12-column grid layouts
-│   └── Controls.jsx            # Atomic UI: Standardized inputs, date-pickers, and buttons
-├── public/
-│   └── assets/                 # Optimized static assets (PNG/SVG logos and textures)
-├── .env.local                  # Environment variables (API keys for generation engine)
-└── package.json                # Dependency manifest (Next.js, Tailwind, Framer Motion)
+| Path | Description |
+| :--- | :--- |
+| `app/api/generate/route.js` | **POST Endpoint:** Orchestrates Wikipedia API & LLM synthesis |
+| `app/edition/[id]/page.js` | **Dynamic Route:** Handles folio state & UI mounting |
+| `components/NewspaperPreview.jsx` | **Core UI Engine:** Maps synthesized JSON to grid layouts |
+| `components/Controls.jsx` | **Atomic UI:** Standardized inputs and action buttons |
