@@ -61,7 +61,6 @@ export async function POST(req) {
         .map(e => `[${e.year}]: ${e.text}`)
         .join("\n") || "General era updates.";
 
-    // ✅ Request streaming from OpenRouter
     const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -72,7 +71,7 @@ export async function POST(req) {
         },
         body: JSON.stringify({
             model: "nvidia/nemotron-3-nano-30b-a3b:free",
-            stream: true, // ✅ KEY CHANGE
+            stream: true, 
             messages: [
                 {
                     role: "system",
@@ -149,8 +148,7 @@ Return ONLY valid JSON:
         return NextResponse.json({ error: "AI Dispatch Failed", detail: err }, { status: 500 });
     }
 
-    // ✅ Pipe the SSE stream from OpenRouter → client
-    // Collect chunks, parse JSON only when stream ends
+    
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
@@ -175,13 +173,13 @@ Return ONLY valid JSON:
                             const token = parsed.choices?.[0]?.delta?.content || "";
                             fullText += token;
 
-                            // ✅ Send each token to client immediately as plain text
+                            
                             controller.enqueue(encoder.encode(token));
-                        } catch { /* malformed SSE line, skip */ }
+                        } catch {  }
                     }
                 }
 
-                // ✅ After stream ends, validate the complete JSON and send a final envelope
+               
                 const clean = fullText.replace(/```json|```/g, "").trim();
                 const newspaperJSON = JSON.parse(clean);
 
@@ -195,7 +193,7 @@ Return ONLY valid JSON:
                     region: region || "London"
                 });
 
-                // ✅ Send the validated final object as a clearly marked envelope
+                
                 controller.enqueue(encoder.encode(`\n__END__${finalPayload}`));
             } catch (e) {
                 controller.enqueue(encoder.encode(`\n__ERROR__${e.message}`));

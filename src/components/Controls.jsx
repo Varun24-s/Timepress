@@ -8,20 +8,16 @@ export default function Controls({ onGenerate }) {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // --- YESTERDAY LOGIC START ---
     const targetDate = new Date(date);
     
-    // We create a separate object for the actual news content
     const newsDate = new Date(targetDate);
     newsDate.setDate(newsDate.getDate() - 1);
 
-    // Format as YYYY-MM-DD for the API/Wikipedia fetch
     const newsDateString = newsDate.toISOString().split('T')[0];
-    // --- YESTERDAY LOGIC END ---
-
+   
     onGenerate({ 
-      displayDate: date,       // This goes on the Newspaper Masthead
-      contentDate: newsDateString, // This is what the AI uses for news
+      displayDate: date,       
+      contentDate: newsDateString, 
       region 
     });
   };

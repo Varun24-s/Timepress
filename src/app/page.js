@@ -14,18 +14,17 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] flex flex-col font-serif text-stone-900 selection:bg-amber-200 relative overflow-x-hidden">
-      {/* Authentic Paper Texture Overlay */}
+      
       <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
            style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/stardust.png')` }} />
 
-      {/* 1. THE IMPERIAL MASTHEAD */}
+     
       <header className="w-full py-6 md:py-10 border-b-4 border-double border-stone-900 bg-[#f4f1ea] relative z-10 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col items-center mb-6">
             <span className="text-[8px] md:text-[12px] uppercase tracking-[0.3em] md:tracking-[0.5em] font-black text-stone-500 mb-2 text-center">
               The Great Universal Dispatch & Records Office
             </span>
-            {/* Responsive Heading: Fluid text sizes */}
             <h1 className="text-4xl sm:text-6xl md:text-8xl font-black uppercase italic tracking-tighter leading-none border-y-2 border-stone-900 py-3 md:py-4 w-full text-center">
               The TimePress
             </h1>
@@ -46,7 +45,6 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* 2. THE CHRONOLOGICAL PORTAL */}
       <main className="flex-grow flex items-center justify-center p-4 md:p-6 py-12 md:py-24 relative z-10">
         <div className="w-full max-w-2xl bg-transparent border-4 md:border-[6px] border-double border-stone-900 p-6 md:p-14 shadow-[15px_15px_0px_rgba(41,37,36,0.08)] md:shadow-[25px_25px_0px_rgba(41,37,36,0.08)]">
           <div className="space-y-8 md:space-y-10">
@@ -98,7 +96,6 @@ export default function LandingPage() {
         </div>
       </main>
 
-      {/* 3. ARCHIVAL DESCRIPTIONS */}
       <section className="max-w-7xl mx-auto w-full px-6 grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-20 py-12 md:py-24 border-t-2 border-stone-900 relative z-10">
         
         <div id="vaults" className="space-y-4 md:space-y-6">
@@ -130,7 +127,6 @@ export default function LandingPage() {
 
       </section>
 
-      {/* 4. THE FOOTER */}
       <footer id="legal" className="w-full py-12 md:py-16 bg-stone-900 text-[#f4f1ea] px-4 md:px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-6">
             <p className="text-[9px] md:text-[11px] uppercase font-bold tracking-[0.3em] md:tracking-[0.6em] opacity-40">

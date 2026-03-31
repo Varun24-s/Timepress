@@ -7,7 +7,7 @@ export default function NewspaperPreview({ data, activeTab }) {
 
     const PAGE_CONFIG = {
         1: { title: "Main Edition", hero: "The TimePress", subHero: "Worldwide Distribution" },
-        2: { title: "Foreign Intelligence", hero: "Foreign", subHero: "Latest Reports From Our Bureaus" },
+        2: { title: "Foreign Intelligence", hero: "Secondary", subHero: "Latest Reports From Our Bureaus" },
         3: { title: "Sporting Intelligence", hero: "Sports", subHero: "Cricket — Turf — Athletics" },
         4: { title: "Classified Notices", hero: "Classifieds", subHero: "Public Notices & Business Appeals" },
     };
@@ -73,14 +73,12 @@ export default function NewspaperPreview({ data, activeTab }) {
                             {data.mainStory?.content}
                         </p>
                     </article>
-                    {/* Sidebar Story (Page 1 Story #2) */}
                     <div className="border-t md:border-t-0 md:border-l border-stone-300 pt-4 md:pt-0 md:pl-6 text-[12px] italic leading-relaxed">
                         <h4 className="font-bold uppercase not-italic text-[10px] mb-2 tracking-widest border-b border-stone-200 pb-1">In Brief</h4>
                         <div className="mb-6">
                             <h5 className="font-bold uppercase not-italic text-[11px] mb-1">{data.sideStories?.[0]?.headline}</h5>
                             <p>{data.sideStories?.[0]?.content || "No further dispatches."}</p>
                         </div>
-                        {/* Optional small filler ad or notice for Page 1 Story #3 */}
                         <div className="pt-4 border-t border-stone-200">
                             <p className="text-[10px] uppercase font-bold tracking-tighter opacity-60 italic">"The price of liberty is eternal vigilance."</p>
                         </div>
@@ -88,7 +86,7 @@ export default function NewspaperPreview({ data, activeTab }) {
                 </div>
             </PageSheet>
 
-            {/* PAGE 2: FOREIGN (Now showing stories 2, 3, and 4) */}
+            {/* PAGE 2: FOREIGN */}
             <PageSheet pageNumber={2}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                     {data.sideStories?.slice(1, 4).map((s, i) => (
@@ -106,8 +104,7 @@ export default function NewspaperPreview({ data, activeTab }) {
                 </div>
             </PageSheet>
 
-            {/* PAGE 3: SPORTS (Structured as Multi-part news) */}
-            {/* PAGE 3: SPORTS (Now structured like Foreign News) */}
+            {/* PAGE 3: SPORTS  */}
             <PageSheet pageNumber={3}>
                 <div className="flex flex-col gap-8">
                 
@@ -125,7 +122,6 @@ export default function NewspaperPreview({ data, activeTab }) {
                         ))}
                     </div>
 
-                    {/* Decorative Sports Footer */}
                     <div className="mt-auto pt-4 border-t-2 border-stone-800 flex justify-around text-[9px] font-black uppercase tracking-[0.3em] text-stone-500">
                         <span>Cricket</span>
                         <span>The Turf</span>
@@ -136,16 +132,14 @@ export default function NewspaperPreview({ data, activeTab }) {
             </PageSheet>
 
 
-            {/* PAGE 4: CLASSIFIEDS - FULL PAGE DENSITY */}
+            {/* PAGE 4: CLASSIFIEDS */}
             <PageSheet pageNumber={4}>
                 <div className="flex flex-col h-full">
-                    {/* Header for the Classifieds Section */}
                     <div className="border-b-2 border-stone-800 mb-6 pb-2 flex justify-between items-end">
                         <h3 className="text-xl md:text-2xl font-black uppercase tracking-tighter">The Public Exchange</h3>
                         <span className="text-[9px] font-bold text-stone-400 italic">Established 1884</span>
                     </div>
 
-                    {/* MASONRY-STYLE COLUMNS: This fills the vertical space */}
                     <div className="columns-2 md:columns-3 gap-6 space-y-6 [column-rule:1px_solid_#d6d3d1]">
                         {(data.classifieds?.length ? data.classifieds : []).map((ad, i) => (
                             <div
@@ -170,7 +164,6 @@ export default function NewspaperPreview({ data, activeTab }) {
                             </div>
                         ))}
 
-                        {/* FILLER ADS: If the AI doesn't provide enough, these keep the page looking full */}
                         <div className="break-inside-avoid border-2 border-dashed border-stone-300 p-3 text-center bg-stone-50/50">
                             <p className="text-[9px] font-bold uppercase text-stone-400 leading-tight">
                                 Space Reserved for Royal Proclamations

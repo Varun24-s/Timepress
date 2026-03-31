@@ -29,7 +29,7 @@ export default function EditionPage() {
 
         async function loadHistoricalData() {
             setLoading(true);
-            setStreamStatus("Contacting archive..."); // ✅ Show live status
+            setStreamStatus("Contacting archive..."); 
             setError(null);
 
             try {
@@ -55,10 +55,8 @@ export default function EditionPage() {
                     buffer += chunk;
                     charCount += chunk.length;
 
-                    // ✅ Update a live word counter so user sees progress
                     setStreamStatus(`Composing edition... (${charCount} characters)`);
 
-                    // ✅ Check if the final validated payload has arrived
                     if (buffer.includes("__END__")) {
                         const finalStr = buffer.split("__END__")[1];
                         const finalData = JSON.parse(finalStr);
@@ -70,7 +68,6 @@ export default function EditionPage() {
                         break;
                     }
 
-                    // ✅ Handle errors sent from server
                     if (buffer.includes("__ERROR__")) {
                         const errMsg = buffer.split("__ERROR__")[1];
                         throw new Error(errMsg);
@@ -94,19 +91,19 @@ export default function EditionPage() {
     }, [dateParam, regionParam]);
 
     const tabs = [
-        { id: 1, label: "Folio I: Front" },
-        { id: 2, label: "Folio II: Foreign" },
-        { id: 3, label: "Folio III: Sports" },
-        { id: 4, label: "Folio IV: Classifieds" }
+        { id: 1, label: "Page I: Front" },
+        { id: 2, label: "Page II: Secondary" },
+        { id: 3, label: "Page III: Sports" },
+        { id: 4, label: "Page IV: Classifieds" }
     ];
 
     return (
         <div className="min-h-screen bg-[#f4f1ea] font-serif text-stone-900 selection:bg-amber-200">
-            {/* 1. ARCHIVAL TOOLBAR (REPLACED MODERN NAV) */}
+           
             <nav className="w-full bg-[#f4f1ea] border-b-4 border-double border-stone-900 sticky top-0 z-50 px-4 py-4 md:px-8 print:hidden">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
 
-                    {/* BACK ACTION */}
+                   
                     <div className="flex items-center gap-6 self-start md:self-auto">
                         <button
                             onClick={() => router.push("/")}
@@ -117,7 +114,6 @@ export default function EditionPage() {
                         </button>
                     </div>
 
-                    {/* PAGE SELECTOR (RECTANGULAR & BOLD) */}
                     <div className="flex flex-wrap justify-center bg-stone-900 p-1 shadow-[4px_4px_0px_#29252440]">
                         {tabs.map((tab) => (
                             <button
@@ -137,14 +133,13 @@ export default function EditionPage() {
                 </div>
             </nav>
 
-            {/* 2. MAIN CONTENT AREA */}
             <main className="w-full max-w-7xl mx-auto px-4 py-8 md:py-16 flex flex-col items-center min-h-[80vh]">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-40 text-center">
                         <div className="w-16 h-16 border-8 border-stone-300 border-t-stone-900 mb-8 animate-spin rounded-none"></div>
                         <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-2">Retrieving Despatch</h2>
                         <p className="text-stone-500 uppercase tracking-[0.3em] text-[10px] font-bold">
-                            {/* ✅ Shows live stream progress, falls back to default message */}
+                           
                             {streamStatus ?? "The Steam-Press is warming..."}
                         </p>
                     </div>
@@ -168,7 +163,6 @@ export default function EditionPage() {
                 )}
             </main>
 
-            {/* 3. SUBTLE FOOTER STYLING */}
             <footer className="w-full py-12 border-t-2 border-stone-300 opacity-30 text-center print:hidden">
                 <p className="text-[10px] font-black uppercase tracking-[0.5em]">TimePress Official Reader Access</p>
             </footer>
